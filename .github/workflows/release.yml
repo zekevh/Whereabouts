@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-14
+    env:
+      SCHEME: Whereabouts
+      CONFIGURATION: Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Build archive
+        run: |
+          xcodebuild archive \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIGURATION" \
+            -archivePath "$RUNNER_TEMP/Whereabouts.xcarchive" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES \
+            | xcpretty
+
+      - name: Export app
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Whereabouts.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist ExportOptions.plist
+
+      - name: Ad-hoc sign
+        run: |
+          codesign \
+            --sign - \
+            --deep \
+            --force \
+            --options runtime \
+            "$RUNNER_TEMP/export/Whereabouts.app"
+
+      - name: Create DMG
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          hdiutil create \
+            -volname "Whereabouts" \
+            -srcfolder "$RUNNER_TEMP/export/Whereabouts.app" \
+            -ov \
+            -format UDZO \
+            "$RUNNER_TEMP/Whereabouts-${VERSION}.dmg"
+          echo "DMG_PATH=$RUNNER_TEMP/Whereabouts-${VERSION}.dmg" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Compute SHA256
+        run: |
+          SHA=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
+          echo "SHA256=${SHA}" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.DMG_PATH }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Release v$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- DMG: Whereabouts-${VERSION}.dmg" >> $GITHUB_STEP_SUMMARY
+          echo "- SHA256: \`${SHA256}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Update **homebrew/whereabouts.rb** with the new version and SHA256." >> $GITHUB_STEP_SUMMARY
