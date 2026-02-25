@@ -22,39 +22,41 @@ struct MapView: NSViewRepresentable {
     }
 
     func updateNSView(_ map: MKMapView, context: Context) {
-        map.removeAnnotations(map.annotations)
-        map.removeOverlays(map.overlays)
+        // Defer mutations to the next run loop turn so they don't run during
+        // a SwiftUI layout pass — avoids the reentrant-layout warning and the
+        // zero-size CAMetalLayer draw before the view has a frame.
+        DispatchQueue.main.async {
+            map.removeAnnotations(map.annotations)
+            map.removeOverlays(map.overlays)
 
-        guard let current = currentCoordinate else {
-            // No data yet — show a world overview.
-            let world = MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: 20, longitude: 0),
-                span: MKCoordinateSpan(latitudeDelta: 160, longitudeDelta: 360)
-            )
-            map.setRegion(world, animated: false)
-            return
-        }
+            guard let current = self.currentCoordinate else {
+                let world = MKCoordinateRegion(
+                    center: CLLocationCoordinate2D(latitude: 20, longitude: 0),
+                    span: MKCoordinateSpan(latitudeDelta: 160, longitudeDelta: 360)
+                )
+                map.setRegion(world, animated: false)
+                return
+            }
 
-        if isVPN, let real = realCoordinate {
-            // Draw a geodesic arc from the real location to the VPN exit node.
-            var coords = [real, current]
-            let arc = MKGeodesicPolyline(coordinates: &coords, count: 2)
-            map.addOverlay(arc)
+            if self.isVPN, let real = self.realCoordinate {
+                var coords = [real, current]
+                let arc = MKGeodesicPolyline(coordinates: &coords, count: 2)
+                map.addOverlay(arc)
 
-            let realPin = makePin(coordinate: real, title: "real")
-            let exitPin = makePin(coordinate: current, title: "exit")
-            map.addAnnotations([realPin, exitPin])
-            map.showAnnotations([realPin, exitPin], animated: false)
-        } else {
-            // Simple pin at current location.
-            let pin = makePin(coordinate: current, title: "current")
-            map.addAnnotation(pin)
-            let region = MKCoordinateRegion(
-                center: current,
-                latitudinalMeters: 60_000,
-                longitudinalMeters: 60_000
-            )
-            map.setRegion(region, animated: false)
+                let realPin = self.makePin(coordinate: real, title: "real")
+                let exitPin = self.makePin(coordinate: current, title: "exit")
+                map.addAnnotations([realPin, exitPin])
+                map.showAnnotations([realPin, exitPin], animated: false)
+            } else {
+                let pin = self.makePin(coordinate: current, title: "current")
+                map.addAnnotation(pin)
+                let region = MKCoordinateRegion(
+                    center: current,
+                    latitudinalMeters: 60_000,
+                    longitudinalMeters: 60_000
+                )
+                map.setRegion(region, animated: false)
+            }
         }
     }
 
