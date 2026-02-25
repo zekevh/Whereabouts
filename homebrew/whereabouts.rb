@@ -12,9 +12,9 @@
 
 cask "whereabouts" do
   version "1.0.0"
-  sha256 "REPLACE_WITH_SHA256_FROM_RELEASE"
+  sha256 "16608565910d15854eefebf4210f9593c43f713938a4087e88a5f1d425e13d86"
 
-  url "https://github.com/USERNAME/Whereabouts/releases/download/v#{version}/Whereabouts-#{version}.dmg"
+  url "https://github.com/zekevh/Whereabouts/releases/download/v#{version}/Whereabouts-#{version}.dmg"
 
   name "Whereabouts"
   desc "macOS menu bar app showing your public IP location and VPN status"

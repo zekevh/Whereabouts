@@ -28,6 +28,9 @@
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Whereabouts uses your GPS location as the arc start point so it can draw the path from your real location to the VPN exit node.</string>
+
     <key>NSMapsUsageDescription</key>
     <string>Shows your current IP location on a map.</string>
 

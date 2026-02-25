@@ -20,8 +20,7 @@ struct PopoverView: View {
 
     private var mapSection: some View {
         MapView(
-            currentCoordinate: vm.ipInfo?.coordinate,
-            realCoordinate: vm.isVPNActive ? vm.realCoordinate : nil,
+            coordinate: vm.ipInfo?.coordinate,
             isVPN: vm.isVPNActive
         )
         .frame(height: 160)
@@ -55,9 +54,11 @@ struct PopoverView: View {
             if let isp = vm.ipInfo?.isp {
                 InfoRow(label: "ISP", value: isp)
             }
-            if let provider = vm.vpnProvider {
-                InfoRow(label: "VPN", value: provider, accent: true)
-            }
+            InfoRow(
+                label: "VPN",
+                value: vm.vpnProvider ?? "No VPN",
+                accent: vm.isVPNActive
+            )
         }
     }
 

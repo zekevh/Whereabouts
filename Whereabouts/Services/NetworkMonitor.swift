@@ -4,7 +4,7 @@ final class NetworkMonitor {
     var onNetworkChange: (() -> Void)?
 
     private let monitor = NWPathMonitor()
-    private let queue = DispatchQueue(label: "com.zvh.whereabouts.network", qos: .background)
+    private let queue = DispatchQueue(label: "io.zvh.whereabouts.network", qos: .background)
     private var debounceTask: Task<Void, Never>?
 
     func start() {

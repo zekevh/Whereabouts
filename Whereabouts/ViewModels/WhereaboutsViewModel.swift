@@ -1,5 +1,4 @@
 import AppKit
-import CoreLocation
 import ServiceManagement
 
 @MainActor
@@ -11,15 +10,11 @@ final class WhereaboutsViewModel: ObservableObject {
     @Published var menuBarTitle: String = "Whereabouts"
     @Published var isLaunchAtLoginEnabled: Bool = false
 
-    /// Last known real (non-VPN) coordinate, persisted across launches.
-    private(set) var realCoordinate: CLLocationCoordinate2D?
-
     private let service = IPGeolocationService()
     private var networkMonitor: NetworkMonitor?
     private var refreshTimer: Timer?
 
     init() {
-        loadCachedRealLocation()
         isLaunchAtLoginEnabled = SMAppService.mainApp.status == .enabled
         Task { await refresh() }
         startNetworkMonitor()
@@ -29,7 +24,10 @@ final class WhereaboutsViewModel: ObservableObject {
     // MARK: - Data
 
     var vpnProvider: String? {
-        isVPNActive ? ipInfo?.isp : nil
+        guard isVPNActive else { return nil }
+        // Prefer the running-app name (e.g. "Mullvad VPN") over the exit-node ISP,
+        // since hosting providers like Datacamp obscure the actual VPN brand.
+        return VPNDetector.providerName() ?? ipInfo?.isp
     }
 
     func refresh() async {
@@ -42,17 +40,7 @@ final class WhereaboutsViewModel: ObservableObject {
             let info = try await service.fetch()
             ipInfo = info
             error = nil
-
-            if !isVPNActive, let coord = info.coordinate {
-                UserDefaults.standard.set(coord.latitude,  forKey: "realLat")
-                UserDefaults.standard.set(coord.longitude, forKey: "realLon")
-                realCoordinate = coord
-            } else if realCoordinate == nil {
-                loadCachedRealLocation()
-            }
-
             menuBarTitle = "\(info.city ?? "Unknown"), \(info.country ?? "??")"
-
         } catch {
             self.error = error.localizedDescription
             if ipInfo == nil { menuBarTitle = "Whereabouts" }
@@ -98,12 +86,5 @@ final class WhereaboutsViewModel: ObservableObject {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in await self?.refresh() }
         }
-    }
-
-    private func loadCachedRealLocation() {
-        let lat = UserDefaults.standard.double(forKey: "realLat")
-        let lon = UserDefaults.standard.double(forKey: "realLon")
-        guard lat != 0 || lon != 0 else { return }
-        realCoordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
     }
 }
