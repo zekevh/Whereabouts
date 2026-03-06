@@ -20,7 +20,7 @@ Know where your connection is. Always.
 ## Install
 
 ```sh
-brew install --cask zekevh/whereabouts/whereabouts
+brew install --cask zekevh/tap/whereabouts
 ```
 
 Or [download the DMG](https://github.com/zekevh/whereabouts/releases/latest).

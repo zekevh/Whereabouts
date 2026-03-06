@@ -1,10 +1,10 @@
 # Homebrew cask for Whereabouts
 #
-# Host this file in a personal tap repo: github.com/USERNAME/homebrew-whereabouts
+# Host this file in the shared tap repo: github.com/USERNAME/homebrew-tap
 #   Casks/whereabouts.rb
 #
 # Install:
-#   brew install --cask USERNAME/whereabouts/whereabouts
+#   brew install --cask USERNAME/tap/whereabouts
 #
 # To update after a new release:
 #   1. Replace `version` with the new version string.
