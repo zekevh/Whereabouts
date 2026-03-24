@@ -27,8 +27,7 @@ jobs:
             -archivePath "$RUNNER_TEMP/Whereabouts.xcarchive" \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=YES \
-            | xcpretty
+            CODE_SIGNING_ALLOWED=YES
 
       - name: Export app
         run: |
